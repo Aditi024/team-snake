@@ -21,6 +21,15 @@ function hideOverlay() {
   $("#overlay").hidden = true;
 }
 
+// Screen reader announcements. Live regions only re-announce when their
+// text content changes, so we toggle a zero-width-space when repeating
+// the same message (e.g. two foods of the same score).
+function announce(msg, urgent = false) {
+  const el = document.getElementById(urgent ? "sr-live-assertive" : "sr-live");
+  if (!el) return;
+  el.textContent = el.textContent === msg ? msg + "\u200B" : msg;
+}
+
 // ---------- App state ----------
 const app = {
   screen: "landing",
@@ -148,8 +157,10 @@ function handleServer(msg) {
       if (app.screen === "landing" || app.screen === "create" || app.screen === "join") {
         showScreen("lobby");
       }
+      announce(`Joined room ${msg.code}. ${msg.mode === "4P" ? "Four-player" : "Two-player"} mode.`);
       break;
     case "lobby":
+      announceLobbyDelta(msg);
       app.lobby = msg;
       app.hostId = msg.hostId;
       app.mode = msg.mode;
@@ -161,11 +172,15 @@ function handleServer(msg) {
       if (msg.status === "LOBBY" && app.screen !== "lobby") showScreen("lobby");
       break;
     case "state":
+      announceStateDelta(msg);
       app.game = msg;
       app.mode = msg.mode;
       app.mySlot = findMySlot(msg.slots);
       if (msg.status === "PLAYING") {
-        if (app.screen !== "play") showScreen("play");
+        if (app.screen !== "play") {
+          showScreen("play");
+          announce(`Game started. You steer ${describeOwnedDir()}.`);
+        }
         renderPlay();
       } else if (msg.status === "OVER") {
         if (app.screen !== "over") showScreen("over");
@@ -174,6 +189,10 @@ function handleServer(msg) {
     case "game_over":
       renderGameOver(msg);
       showScreen("over");
+      announce(
+        `Game over. ${msg.cause === "WALL" ? "Hit the wall" : "Bit yourself"}. Final score ${msg.score}.`,
+        true
+      );
       break;
     case "error":
       handleError(msg);
@@ -181,6 +200,60 @@ function handleServer(msg) {
     case "pong":
       break;
   }
+}
+
+// Track previous game-state values so we only announce deltas.
+const _prev = { score: 0, length: 0, lobbyHash: "" };
+
+function announceStateDelta(msg) {
+  if (typeof msg.score === "number" && msg.score > _prev.score) {
+    announce(`Score ${msg.score}. Length ${msg.length}.`);
+  }
+  _prev.score = msg.score ?? _prev.score;
+  _prev.length = msg.length ?? _prev.length;
+}
+
+function announceLobbyDelta(msg) {
+  if (!msg.slots) return;
+  // Hash slot occupancy + ready state. Announce when something changes.
+  const hash = msg.slots
+    .map((s) => `${s.slot}:${s.playerId || ""}:${s.ready ? 1 : 0}:${s.connected ? 1 : 0}`)
+    .join("|");
+  if (hash === _prev.lobbyHash) return;
+
+  // Find the most relevant change to announce.
+  const prevSlots = app.lobby?.slots || [];
+  for (const s of msg.slots) {
+    const old = prevSlots.find((p) => p.slot === s.slot);
+    const dir = s.slot.toLowerCase();
+    if (!old) continue;
+    if (!old.playerId && s.playerId) {
+      announce(`${s.name || "A player"} joined as ${dir}.`);
+      break;
+    }
+    if (old.playerId && !s.playerId) {
+      announce(`${old.name || "A player"} left ${dir}.`);
+      break;
+    }
+    if (!old.ready && s.ready) {
+      announce(`${s.name || "Player"} ready as ${dir}.`);
+      break;
+    }
+    if (old.connected && !s.connected) {
+      announce(`${s.name || "Player"} disconnected from ${dir}.`);
+      break;
+    }
+  }
+  _prev.lobbyHash = hash;
+}
+
+function describeOwnedDir() {
+  if (app.mode === "2P") {
+    if (app.mySlot === "UP") return "the up and down axis";
+    if (app.mySlot === "LEFT") return "the left and right axis";
+  }
+  if (app.mySlot) return app.mySlot.toLowerCase();
+  return "no direction yet";
 }
 
 function handleError(msg) {

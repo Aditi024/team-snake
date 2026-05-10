@@ -117,7 +117,13 @@
               <span class="hud-item">SCORE <span id="hud-score">0</span></span>
               <span class="hud-item">LEN <span id="hud-length">3</span></span>
             </div>
-            <canvas id="board" width="320" height="256" aria-label="Game board"></canvas>
+            <canvas
+              id="board"
+              width="320"
+              height="256"
+              role="img"
+              aria-label="Snake game board. Live score and events are announced separately."
+            ></canvas>
             <ul class="slot-strip" id="slot-strip"></ul>
           </section>
 
@@ -139,6 +145,24 @@
           </div>
         </div>
       </div>
+
+      <!--
+        Live region for screen reader announcements. Visually hidden but
+        announced by assistive tech. Score, slot changes, and game-over
+        events get written here.
+      -->
+      <div
+        id="sr-live"
+        class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+      <div
+        id="sr-live-assertive"
+        class="sr-only"
+        aria-live="assertive"
+        aria-atomic="true"
+      ></div>
 
       <!-- D-pad: visible only on touch/small screens. On desktop we hide it. -->
       <div class="dpad" id="dpad" aria-label="Directional controls">
