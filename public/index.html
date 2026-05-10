@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>TEAM SNAKE</title>
+    <script>
+      if (location.search.includes("reset")) {
+        try { sessionStorage.clear(); } catch {}
+        location.replace("/");
+      }
+    </script>
+    <link rel="stylesheet" href="/style.css" />
+    <link
+      rel="preload"
+      href="https://fonts.gstatic.com/s/pressstart2p/v14/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <main class="stage">
+      <div class="lcd">
+        <div class="lcd-inner">
+          <!-- LANDING -->
+          <section class="screen is-active" data-screen="landing">
+            <div class="title-block">
+              <h1 class="title">TEAM<br />SNAKE</h1>
+              <p class="subtitle">CO-OP FOR 2 OR 4</p>
+            </div>
+            <div class="actions">
+              <button class="btn" data-action="go-create">CREATE ROOM</button>
+              <button class="btn" data-action="go-join">JOIN ROOM</button>
+            </div>
+          </section>
+
+          <!-- CREATE -->
+          <section class="screen" data-screen="create">
+            <h2 class="heading">CREATE ROOM</h2>
+            <label class="field">
+              <span class="field-label">NAME</span>
+              <input
+                class="input"
+                id="create-name"
+                maxlength="8"
+                autocapitalize="characters"
+                placeholder="YOU"
+              />
+            </label>
+            <div class="field">
+              <span class="field-label">MODE</span>
+              <div class="toggle" role="radiogroup" aria-label="Mode">
+                <button class="toggle-btn is-on" data-mode="2P">2P</button>
+                <button class="toggle-btn" data-mode="4P">4P</button>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn" data-action="create-submit">CREATE</button>
+              <button class="btn btn-ghost" data-action="back-landing">BACK</button>
+            </div>
+          </section>
+
+          <!-- JOIN -->
+          <section class="screen" data-screen="join">
+            <h2 class="heading">JOIN ROOM</h2>
+            <label class="field">
+              <span class="field-label">CODE</span>
+              <input
+                class="input code-input"
+                id="join-code"
+                maxlength="4"
+                autocapitalize="characters"
+                placeholder="ABCD"
+              />
+            </label>
+            <label class="field">
+              <span class="field-label">NAME</span>
+              <input
+                class="input"
+                id="join-name"
+                maxlength="8"
+                autocapitalize="characters"
+                placeholder="YOU"
+              />
+            </label>
+            <p class="status-line" id="join-status"></p>
+            <div class="actions">
+              <button class="btn" data-action="join-submit">JOIN</button>
+              <button class="btn btn-ghost" data-action="back-landing">BACK</button>
+            </div>
+          </section>
+
+          <!-- LOBBY -->
+          <section class="screen" data-screen="lobby">
+            <div class="lobby-head">
+              <span class="lobby-label">CODE</span>
+              <span class="lobby-code" id="lobby-code">----</span>
+              <button class="btn-mini" data-action="copy-code">COPY</button>
+            </div>
+            <p class="lobby-mode" id="lobby-mode">4 PLAYERS</p>
+            <ul class="slots" id="lobby-slots"></ul>
+            <p class="status-line" id="lobby-status">PICK YOUR DIRECTION</p>
+            <div class="actions">
+              <button class="btn" data-action="ready" id="ready-btn">READY</button>
+              <button class="btn" data-action="start" id="start-btn" hidden>START</button>
+              <button class="btn btn-ghost" data-action="leave">LEAVE</button>
+            </div>
+          </section>
+
+          <!-- PLAY -->
+          <section class="screen" data-screen="play">
+            <div class="hud">
+              <span class="hud-item">SCORE <span id="hud-score">0</span></span>
+              <span class="hud-item">LEN <span id="hud-length">3</span></span>
+            </div>
+            <canvas id="board" width="320" height="256" aria-label="Game board"></canvas>
+            <ul class="slot-strip" id="slot-strip"></ul>
+          </section>
+
+          <!-- GAME OVER -->
+          <section class="screen" data-screen="over">
+            <h2 class="heading">GAME OVER</h2>
+            <p class="over-cause" id="over-cause">HIT THE WALL</p>
+            <p class="over-score">SCORE <span id="over-score">0</span></p>
+            <div class="actions">
+              <button class="btn" data-action="restart" id="restart-btn" hidden>PLAY AGAIN</button>
+              <button class="btn btn-ghost" data-action="leave">LEAVE</button>
+            </div>
+            <p class="status-line" id="over-status"></p>
+          </section>
+
+          <!-- OVERLAY: reconnecting -->
+          <div class="overlay" id="overlay" hidden>
+            <p id="overlay-msg">RECONNECTING…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- D-pad: visible only on touch/small screens. On desktop we hide it. -->
+      <div class="dpad" id="dpad" aria-label="Directional controls">
+        <button class="dpad-btn dpad-up" data-dir="UP" aria-label="Up">▲</button>
+        <button class="dpad-btn dpad-left" data-dir="LEFT" aria-label="Left">◀</button>
+        <div class="dpad-center"></div>
+        <button class="dpad-btn dpad-right" data-dir="RIGHT" aria-label="Right">▶</button>
+        <button class="dpad-btn dpad-down" data-dir="DOWN" aria-label="Down">▼</button>
+      </div>
+
+      <p class="kb-hint">USE ARROW KEYS OR WASD</p>
+    </main>
+
+    <script type="module" src="/client.js"></script>
+  </body>
+</html>
